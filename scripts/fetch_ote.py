@@ -119,7 +119,8 @@ def parse_data(data: dict, report_date: str):
             minute = (i % 4) * 15
             price = price_qh_points[i].get("y", "")
             volume = volume_points[i].get("y", "")
-            qh_rows.append([report_date, hour, minute, price, volume])
+            interval_start = f"{report_date}T{hour:02d}:{minute:02d}:00"
+            qh_rows.append([report_date, hour, minute, interval_start, price, volume])
 
         # Build hourly rows from QH data
         hourly_rows = []
@@ -143,7 +144,8 @@ def parse_data(data: dict, report_date: str):
                         count += 1
             h_volume = round(h_volume, 2) if count > 0 else ""
 
-            hourly_rows.append([report_date, h, h_price, h_volume])
+            interval_start = f"{report_date}T{h:02d}:00:00"
+            hourly_rows.append([report_date, h, interval_start, h_price, h_volume])
 
         return qh_rows, hourly_rows
 
@@ -168,7 +170,8 @@ def parse_data(data: dict, report_date: str):
         for h in range(min(24, n_pts)):
             price = price_points[h].get("y", "")
             volume = volume_points[h].get("y", "")
-            hourly_rows.append([report_date, h, price, volume])
+            interval_start = f"{report_date}T{h:02d}:00:00"
+            hourly_rows.append([report_date, h, interval_start, price, volume])
 
         return qh_rows, hourly_rows
 
@@ -210,12 +213,12 @@ def process_date(report_date: str, qh_existing: set[str], hourly_existing: set[s
     wrote_something = False
 
     if qh_rows and not qh_done:
-        write_csv(qh_csv, ["date", "hour", "minute", "price_eur_mwh", "volume_mwh"], qh_rows, qh_existing)
+        write_csv(qh_csv, ["date", "hour", "minute", "interval_start", "price_eur_mwh", "volume_mwh"], qh_rows, qh_existing)
         qh_existing.add(report_date)
         wrote_something = True
 
     if hourly_rows and not hourly_done:
-        write_csv(hourly_csv, ["date", "hour", "price_eur_mwh", "volume_mwh"], hourly_rows, hourly_existing)
+        write_csv(hourly_csv, ["date", "hour", "interval_start", "price_eur_mwh", "volume_mwh"], hourly_rows, hourly_existing)
         hourly_existing.add(report_date)
         wrote_something = True
 
