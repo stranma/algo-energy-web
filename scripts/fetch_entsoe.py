@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
-"""Fetch CZ aFRR/mFRR balancing capacity clearing prices from ENTSO-E.
+"""Fetch CZ aFRR/mFRR accepted bid distributions from ENTSO-E (A15).
+
+Uses the A15 (procured balancing capacity) endpoint which returns all
+individual accepted bids. Aggregates in-memory to per-day/block/direction
+percentile statistics.
 
 Usage:
-    Backfill:  python scripts/fetch_entsoe.py --from 2024-01-01 --to 2026-02-11
+    Backfill:  python scripts/fetch_entsoe.py --from 2025-10-02 --to 2026-02-11
     Daily:     python scripts/fetch_entsoe.py  (fetches yesterday + today)
     API key:   --api-key KEY  or env ENTSOE_API_KEY
 """
@@ -10,6 +14,7 @@ Usage:
 import argparse
 import csv
 import io
+import math
 import os
 import sys
 import time
@@ -17,6 +22,7 @@ import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -38,13 +44,10 @@ PRODUCTS = {
 # Direction mapping
 DIRECTION_MAP = {"A01": "up", "A02": "down", "A03": "both"}
 
-# PSR type mapping
-PSR_TYPE_MAP = {"A03": "mixed", "A04": "generation", "A05": "load"}
-
-# Resolution to number of blocks per day
-RESOLUTION_BLOCKS = {"PT60M": 24, "PT4H": 6, "PT15M": 96}
-
-CSV_HEADER = ["date", "block", "block_start", "direction", "psr_type", "price_eur_mw", "volume_mw"]
+CSV_HEADER = [
+    "date", "block", "block_start", "direction",
+    "count", "max_price", "p10", "p25", "p50", "p75", "p90", "total_volume",
+]
 
 
 def ensure_dirs():
@@ -87,8 +90,6 @@ def cet_to_utc_str(d: date) -> tuple:
     CET midnight = 23:00 UTC previous day (winter) or 22:00 UTC (summer).
     Returns (periodStart, periodEnd) in YYYYMMDDHHmm format.
     """
-    # Use CET offset: check if date falls in DST (CEST = UTC+2) or not (CET = UTC+1)
-    # DST in Europe: last Sunday of March to last Sunday of October
     year = d.year
 
     # Find last Sunday of March
@@ -111,14 +112,28 @@ def cet_to_utc_str(d: date) -> tuple:
     return (utc_start.strftime("%Y%m%d%H%M"), utc_end.strftime("%Y%m%d%H%M"))
 
 
+def percentile(sorted_vals: list, p: float) -> float:
+    """Compute p-th percentile (0-100) using linear interpolation."""
+    n = len(sorted_vals)
+    if n == 0:
+        return 0.0
+    if n == 1:
+        return sorted_vals[0]
+    k = (p / 100.0) * (n - 1)
+    f = math.floor(k)
+    c = math.ceil(k)
+    if f == c:
+        return sorted_vals[int(k)]
+    return sorted_vals[f] + (k - f) * (sorted_vals[c] - sorted_vals[f])
+
+
 def fetch_xml(api_key: str, process_type: str, period_start: str, period_end: str, retries: int = 1) -> str | None:
-    """Fetch ENTSO-E API and return decompressed XML string, or None on error."""
+    """Fetch ENTSO-E A15 API and return decompressed XML string, or None on error."""
     params = (
-        f"documentType=A81"
-        f"&businessType=B95"
-        f"&Type_MarketAgreement.Type=A01"
-        f"&controlArea_Domain=10YCZ-CEPS-----N"
+        f"documentType=A15"
+        f"&area_Domain=10YCZ-CEPS-----N"
         f"&processType={process_type}"
+        f"&Type_MarketAgreement.Type=A01"
         f"&periodStart={period_start}"
         f"&periodEnd={period_end}"
         f"&securityToken={api_key}"
@@ -179,19 +194,19 @@ def is_4h_blocks(points: list) -> bool:
     return all((pos - 1) % 4 == 0 for pos, _, _ in points)
 
 
-def parse_xml(xml_str: str, delivery_date: str) -> list:
-    """Parse ENTSO-E Balancing XML into CSV rows.
+def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
+    """Parse A15 XML: collect all accepted bids, aggregate per (block, direction).
 
-    Filters:
-    - Only standard_MarketProduct (skips specific/non-standard contracts)
-    - Keeps: single-point series (flat daily price) → 1 row
-    - Keeps: 4h-block series (positions at 4h boundaries) → 6 rows
-    - Skips: hourly bid series (individual hour positions)
+    Each TimeSeries = one accepted bid provider with price + volume per block.
+    We group all bids by (block_idx, block_start, direction), then compute
+    percentile statistics for each group.
 
-    Returns list of [date, block, block_start, direction, psr_type, price, volume] rows.
+    Returns list of CSV rows sorted by (block_idx, direction).
     """
     root = ET.fromstring(xml_str)
-    rows = []
+
+    # Collect bids: key = (block_idx, block_start, direction) -> list of (price, volume)
+    bids = defaultdict(list)
 
     for ts in root:
         if not ts.tag.endswith("TimeSeries"):
@@ -199,15 +214,12 @@ def parse_xml(xml_str: str, delivery_date: str) -> list:
 
         # Extract metadata — namespace-agnostic
         direction_code = ""
-        psr_code = ""
         has_standard = False
         has_original = False
         for child in ts:
             tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
             if tag == "flowDirection.direction":
                 direction_code = child.text or ""
-            elif tag == "mktPSRType.psrType":
-                psr_code = child.text or ""
             elif tag == "standard_MarketProduct.marketProductType":
                 has_standard = True
             elif tag == "original_MarketProduct.marketProductType":
@@ -218,7 +230,6 @@ def parse_xml(xml_str: str, delivery_date: str) -> list:
             continue
 
         direction = DIRECTION_MAP.get(direction_code, direction_code.lower())
-        psr_type = PSR_TYPE_MAP.get(psr_code, psr_code.lower())
 
         # Find Period element
         for period_el in ts:
@@ -233,16 +244,22 @@ def parse_xml(xml_str: str, delivery_date: str) -> list:
                     resolution = pel.text or ""
                 elif ptag == "Point":
                     pos = None
-                    qty = ""
-                    price = ""
+                    qty = 0.0
+                    price = 0.0
                     for field in pel:
                         ftag = field.tag.split("}")[-1] if "}" in field.tag else field.tag
                         if ftag == "position":
                             pos = int(field.text)
                         elif ftag == "quantity":
-                            qty = field.text or ""
+                            try:
+                                qty = float(field.text)
+                            except (ValueError, TypeError):
+                                qty = 0.0
                         elif ftag == "procurement_Price.amount":
-                            price = field.text or ""
+                            try:
+                                price = float(field.text)
+                            except (ValueError, TypeError):
+                                price = 0.0
                     if pos is not None:
                         points.append((pos, qty, price))
 
@@ -251,50 +268,60 @@ def parse_xml(xml_str: str, delivery_date: str) -> list:
 
             points.sort(key=lambda p: p[0])
 
-            # Single point = flat daily value → 1 row
-            if len(points) == 1:
-                qty, price = points[0][1], points[0][2]
-                rows.append([delivery_date, 0, "00:00", direction, psr_type, price, qty])
-                continue
-
-            # 4h blocks within PT60M (positions at 1,5,9,13,17,21) → 6 rows
-            if resolution == "PT60M" and is_4h_blocks(points):
-                for pos, qty, price in points:
-                    block_idx = (pos - 1) // 4  # 0-5
-                    hour = block_idx * 4
-                    block_start = f"{hour:02d}:00"
-                    rows.append([delivery_date, block_idx, block_start, direction, psr_type, price, qty])
-                continue
-
-            # Native PT4H resolution → 6 rows
+            # Determine block mapping based on resolution / point positions
             if resolution == "PT4H":
+                # Native 4h blocks: position 1-6 → block 0-5
                 for pos, qty, price in points:
-                    block_idx = pos - 1  # 0-5
+                    if qty == 0 and price == 0:
+                        continue
+                    block_idx = pos - 1
                     hour = block_idx * 4
                     block_start = f"{hour:02d}:00"
-                    rows.append([delivery_date, block_idx, block_start, direction, psr_type, price, qty])
-                continue
+                    bids[(block_idx, block_start, direction)].append((price, qty))
+            elif resolution == "PT60M" and is_4h_blocks(points):
+                # Sparse hourly positions at 4h boundaries (1,5,9,13,17,21)
+                for pos, qty, price in points:
+                    if qty == 0 and price == 0:
+                        continue
+                    block_idx = (pos - 1) // 4
+                    hour = block_idx * 4
+                    block_start = f"{hour:02d}:00"
+                    bids[(block_idx, block_start, direction)].append((price, qty))
+            elif resolution == "PT60M" and len(points) == 1:
+                # Single point = flat daily value → assign to block 0
+                pos, qty, price = points[0]
+                if not (qty == 0 and price == 0):
+                    bids[(0, "00:00", direction)].append((price, qty))
+            # else: hourly bids with many points → skip
 
-            # Anything else (hourly bids) → skip
+    # Aggregate each group into stats
+    rows = []
+    for key in sorted(bids.keys(), key=lambda k: (k[0], k[2])):
+        block_idx, block_start, direction = key
+        entries = bids[key]
+        if not entries:
+            continue
+
+        prices = sorted(e[0] for e in entries)
+        total_vol = sum(e[1] for e in entries)
+        count = len(prices)
+
+        rows.append([
+            delivery_date,
+            block_idx,
+            block_start,
+            direction,
+            count,
+            f"{max(prices):.2f}",
+            f"{percentile(prices, 10):.2f}",
+            f"{percentile(prices, 25):.2f}",
+            f"{percentile(prices, 50):.2f}",
+            f"{percentile(prices, 75):.2f}",
+            f"{percentile(prices, 90):.2f}",
+            f"{total_vol:.1f}",
+        ])
 
     return rows
-
-
-def fetch_product_date(api_key: str, product: str, d: date, existing_dates: set) -> tuple:
-    """Fetch one product for one date. Returns (rows, fetched_from_api)."""
-    date_str = d.isoformat()
-    if date_str in existing_dates:
-        return [], False
-
-    process_type = PRODUCTS[product]["processType"]
-    period_start, period_end = cet_to_utc_str(d)
-
-    xml_str = fetch_xml(api_key, process_type, period_start, period_end)
-    if xml_str is None:
-        return [], True  # API was called but no data
-
-    rows = parse_xml(xml_str, date_str)
-    return rows, True
 
 
 def date_range(start: date, end: date):
@@ -306,7 +333,7 @@ def date_range(start: date, end: date):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Fetch ENTSO-E balancing capacity data.")
+    parser = argparse.ArgumentParser(description="Fetch ENTSO-E balancing capacity data (A15 accepted bids).")
     parser.add_argument("--from", dest="from_date", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--to", dest="to_date", help="End date (YYYY-MM-DD)")
     parser.add_argument("--api-key", dest="api_key", help="ENTSO-E API key (or env ENTSOE_API_KEY)")
@@ -358,22 +385,29 @@ def main():
                 skipped += 1
                 continue
 
-            rows, called_api = fetch_product_date(api_key, product, d, existing)
-            if called_api:
-                api_calls += 1
+            process_type = PRODUCTS[product]["processType"]
+            period_start, period_end = cet_to_utc_str(d)
 
-            if rows:
-                csv_path = product_dir / f"{year}.csv"
-                write_csv(csv_path, rows)
-                existing.add(date_str)
-                fetched += 1
-                print(f"[OK] {len(rows)} rows")
-            else:
+            xml_str = fetch_xml(api_key, process_type, period_start, period_end)
+            api_calls += 1
+
+            if xml_str is None:
                 skipped += 1
                 print("[NO DATA]")
+            else:
+                rows = parse_and_aggregate(xml_str, date_str)
+                if rows:
+                    csv_path = product_dir / f"{year}.csv"
+                    write_csv(csv_path, rows)
+                    existing.add(date_str)
+                    fetched += 1
+                    print(f"[OK] {len(rows)} rows")
+                else:
+                    skipped += 1
+                    print("[NO BIDS]")
 
             # Rate limiting
-            if called_api and i < total - 1:
+            if i < total - 1:
                 time.sleep(DELAY_BETWEEN_REQUESTS)
 
         print(f"  {product.upper()} done. Fetched: {fetched}, Skipped: {skipped}, API calls: {api_calls}")

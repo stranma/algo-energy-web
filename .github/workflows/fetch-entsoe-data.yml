@@ -25,9 +25,6 @@ jobs:
         env:
           ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
 
-      - name: Compute statistics
-        run: python scripts/compute_entsoe_stats.py
-
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"

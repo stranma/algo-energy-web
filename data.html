@@ -82,20 +82,29 @@
 
       <section class="section">
         <div class="container">
-          <h2>Stáhnout statistiku</h2>
-          <p>Souhrnné percentily clearing cen per blok a směr.</p>
+          <h2>Stáhnout data nabídek</h2>
+          <p>Denní distribuce akceptovaných nabídek — percentily cen per den, blok a směr (zdroj: ENTSO-E A15).</p>
 
-          <ul class="download-links" style="margin-top: 24px;">
-            <li><a href="data/entsoe/afrr_stats.csv" download>aFRR — statistika clearing cen</a></li>
-            <li><a href="data/entsoe/mfrr_stats.csv" download>mFRR — statistika clearing cen</a></li>
+          <h3 style="margin-top: 24px;">aFRR</h3>
+          <ul class="download-links">
+            <li><a href="data/entsoe/afrr/2026.csv" download>aFRR 2026</a></li>
+            <li><a href="data/entsoe/afrr/2025.csv" download>aFRR 2025</a></li>
+          </ul>
+
+          <h3 style="margin-top: 24px;">mFRR</h3>
+          <ul class="download-links">
+            <li><a href="data/entsoe/mfrr/2026.csv" download>mFRR 2026</a></li>
+            <li><a href="data/entsoe/mfrr/2025.csv" download>mFRR 2025</a></li>
           </ul>
 
           <h3 style="margin-top: 32px;">Poznámky k datům</h3>
           <ul style="font-size: 14px; color: #666; line-height: 1.6;">
-            <li><strong>Bloky:</strong> Denní aukce se dělí na bloky (typicky 4h bloky = 6 za den, nebo hodinové = 24 za den). Rozlišení závisí na produktu a období.</li>
-            <li><strong>Směr:</strong> „up" = regulace nahoru, „down" = regulace dolů, „both" = kombinovaný.</li>
-            <li><strong>Clearing cena (max_price, p10–p90):</strong> Maximální akceptovaná nabídka v aukci v EUR/MW. Percentily: pokud vaše nabídka &le; p75, vyhráli byste v 75 % aukcí.</li>
-            <li><strong>avg_volume:</strong> Průměrný akceptovaný objem (MW) na aukci pro daný blok a směr.</li>
+            <li><strong>Zdroj:</strong> ENTSO-E Transparency Platform, dokument A15 (procured balancing capacity) — všechny individuální akceptované nabídky.</li>
+            <li><strong>Bloky:</strong> 6 bloků po 4 hodinách za den (00:00, 04:00, …, 20:00).</li>
+            <li><strong>Směr:</strong> „up" = regulace nahoru, „down" = regulace dolů.</li>
+            <li><strong>count:</strong> Počet akceptovaných nabídek v dané aukci.</li>
+            <li><strong>max_price, p10–p90:</strong> Cenové percentily v EUR/MW. Pokud vaše nabídka &le; p75, vyhráli byste ve většině aukcí.</li>
+            <li><strong>total_volume:</strong> Celkový akceptovaný objem (MW) v dané aukci.</li>
           </ul>
         </div>
       </section>
