@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Data | AlgoEnergy</title>
-    <meta name="description" content="Denní trh s elektřinou (CZ) — hodinové a čtvrthodinové ceny a objemy z OTE." />
+    <meta name="description" content="Denní trh s elektřinou a podpůrné služby (CZ) — data z OTE a ENTSO-E." />
     <link rel="stylesheet" href="assets/styles.css" />
   </head>
   <body>
@@ -68,6 +68,34 @@
             <li><a href="data/qh/2026.csv" download>2026 — čtvrthodinové</a></li>
             <li><a href="data/qh/2025.csv" download>2025 — čtvrthodinové</a></li>
             <li><a href="data/qh/2024.csv" download>2024 — čtvrthodinové</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="hero compact">
+        <div class="container">
+          <p class="eyebrow">ENTSO-E Data</p>
+          <h1>Podpůrné služby — aFRR &amp; mFRR (CZ)</h1>
+          <p class="lead">Clearing ceny a objemy z aukce podpůrných služeb (aFRR, mFRR). Data ze zdroje ENTSO-E Transparency Platform.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2>Stáhnout statistiku</h2>
+          <p>Souhrnné percentily clearing cen per blok a směr.</p>
+
+          <ul class="download-links" style="margin-top: 24px;">
+            <li><a href="data/entsoe/afrr_stats.csv" download>aFRR — statistika clearing cen</a></li>
+            <li><a href="data/entsoe/mfrr_stats.csv" download>mFRR — statistika clearing cen</a></li>
+          </ul>
+
+          <h3 style="margin-top: 32px;">Poznámky k datům</h3>
+          <ul style="font-size: 14px; color: #666; line-height: 1.6;">
+            <li><strong>Bloky:</strong> Denní aukce se dělí na bloky (typicky 4h bloky = 6 za den, nebo hodinové = 24 za den). Rozlišení závisí na produktu a období.</li>
+            <li><strong>Směr:</strong> „up" = regulace nahoru, „down" = regulace dolů, „both" = kombinovaný.</li>
+            <li><strong>Clearing cena (max_price, p10–p90):</strong> Maximální akceptovaná nabídka v aukci v EUR/MW. Percentily: pokud vaše nabídka &le; p75, vyhráli byste v 75 % aukcí.</li>
+            <li><strong>avg_volume:</strong> Průměrný akceptovaný objem (MW) na aukci pro daný blok a směr.</li>
           </ul>
         </div>
       </section>
