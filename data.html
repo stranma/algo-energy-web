@@ -22,10 +22,20 @@
     </header>
 
     <main>
-      <section class="section light">
+      <section class="hero compact">
+        <div class="container hero-content">
+          <div>
+            <p class="eyebrow">Otevřená data</p>
+            <h1>Energetická tržní data (CZ)</h1>
+            <p class="lead">Ceny a objemy z denního trhu s elektřinou (OTE) a distribuce nabídek z aukcí podpůrných služeb aFRR/mFRR (ENTSO-E).</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
         <div class="container">
-          <h2>Stáhnout CSV</h2>
-          <p>Kompletní datové soubory ke stažení ve formátu CSV.</p>
+          <h2>Denní trh s elektřinou — OTE</h2>
+          <p>Hodinové a čtvrthodinové ceny a objemy z českého denního trhu s elektřinou.</p>
 
           <h3 style="margin-top: 24px;">Hodinová data</h3>
           <ul class="download-links">
@@ -43,18 +53,10 @@
         </div>
       </section>
 
-      <section class="hero compact">
+      <section class="section light">
         <div class="container">
-          <p class="eyebrow">ENTSO-E Data</p>
-          <h1>Podpůrné služby — aFRR &amp; mFRR (CZ)</h1>
-          <p class="lead">Clearing ceny a objemy z aukce podpůrných služeb (aFRR, mFRR). Data ze zdroje ENTSO-E Transparency Platform.</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <h2>Stáhnout data nabídek</h2>
-          <p>Denní distribuce akceptovaných nabídek — percentily cen per den, blok a směr (zdroj: ENTSO-E A15).</p>
+          <h2>Podpůrné služby aFRR &amp; mFRR — ENTSO-E</h2>
+          <p>Denní distribuce akceptovaných nabídek — percentily cen per den, blok a směr (zdroj: ENTSO-E Transparency Platform, dokument A15).</p>
 
           <h3 style="margin-top: 24px;">aFRR</h3>
           <ul class="download-links">
@@ -70,7 +72,6 @@
 
           <h3 style="margin-top: 32px;">Poznámky k datům</h3>
           <ul style="font-size: 14px; color: #666; line-height: 1.6;">
-            <li><strong>Zdroj:</strong> ENTSO-E Transparency Platform, dokument A15 (procured balancing capacity) — všechny individuální akceptované nabídky.</li>
             <li><strong>Bloky:</strong> 6 bloků po 4 hodinách za den (00:00, 04:00, …, 20:00).</li>
             <li><strong>Směr:</strong> „up" = regulace nahoru, „down" = regulace dolů.</li>
             <li><strong>count:</strong> Počet akceptovaných nabídek v dané aukci.</li>
