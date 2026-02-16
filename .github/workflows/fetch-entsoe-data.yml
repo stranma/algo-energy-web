@@ -34,6 +34,9 @@ jobs:
             echo "No new data to commit."
           else
             git commit -m "Update ENTSO-E balancing data $(date -u +%Y-%m-%d)"
-            git pull --rebase
-            git push
+            for i in 1 2 3; do
+              git pull --rebase && git push && break
+              echo "Push attempt $i failed, retrying in 5s..."
+              sleep 5
+            done
           fi
