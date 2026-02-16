@@ -324,6 +324,18 @@ def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
     return rows
 
 
+BLOCKS = [(0, "00:00"), (1, "04:00"), (2, "08:00"), (3, "12:00"), (4, "16:00"), (5, "20:00")]
+
+
+def nan_placeholder_rows(date_str: str) -> list:
+    """Return 12 NaN placeholder rows (6 blocks x 2 directions) for a missing date."""
+    rows = []
+    for block_idx, block_start in BLOCKS:
+        for direction in ["down", "up"]:
+            rows.append([date_str, block_idx, block_start, direction, 0, "", "", "", "", "", "", 0])
+    return rows
+
+
 def date_range(start: date, end: date):
     """Yield dates from start to end inclusive."""
     current = start
@@ -391,20 +403,27 @@ def main():
             xml_str = fetch_xml(api_key, process_type, period_start, period_end)
             api_calls += 1
 
+            csv_path = product_dir / f"{year}.csv"
+
             if xml_str is None:
-                skipped += 1
-                print("[NO DATA]")
+                rows = nan_placeholder_rows(date_str)
+                write_csv(csv_path, rows)
+                existing.add(date_str)
+                fetched += 1
+                print(f"[NO DATA] → {len(rows)} NaN rows")
             else:
                 rows = parse_and_aggregate(xml_str, date_str)
                 if rows:
-                    csv_path = product_dir / f"{year}.csv"
                     write_csv(csv_path, rows)
                     existing.add(date_str)
                     fetched += 1
                     print(f"[OK] {len(rows)} rows")
                 else:
-                    skipped += 1
-                    print("[NO BIDS]")
+                    rows = nan_placeholder_rows(date_str)
+                    write_csv(csv_path, rows)
+                    existing.add(date_str)
+                    fetched += 1
+                    print(f"[NO BIDS] → {len(rows)} NaN rows")
 
             # Rate limiting
             if i < total - 1:

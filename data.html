@@ -77,6 +77,9 @@
             <li><strong>count:</strong> Počet akceptovaných nabídek v dané aukci.</li>
             <li><strong>max_price, p10–p90:</strong> Cenové percentily v EUR/MW. Pokud vaše nabídka &le; p75, vyhráli byste ve většině aukcí.</li>
             <li><strong>total_volume:</strong> Celkový akceptovaný objem (MW) v dané aukci.</li>
+            <li><strong>Chybějící data:</strong> Pokud ENTSO-E Transparency Platform nevrátí data
+                pro daný den, řádek obsahuje <code>count=0</code> a prázdné cenové sloupce.
+                Tato data nebyla dostupná na zdroji (HTTP 400/409).</li>
           </ul>
         </div>
       </section>
