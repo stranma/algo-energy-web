@@ -45,8 +45,18 @@ PRODUCTS = {
 DIRECTION_MAP = {"A01": "up", "A02": "down", "A03": "both"}
 
 CSV_HEADER = [
-    "date", "block", "block_start", "direction",
-    "count", "max_price", "p10", "p25", "p50", "p75", "p90", "total_volume",
+    "date",
+    "block",
+    "block_start",
+    "direction",
+    "count",
+    "max_price",
+    "p10",
+    "p25",
+    "p50",
+    "p75",
+    "p90",
+    "total_volume",
 ]
 
 
@@ -62,7 +72,7 @@ def load_existing_dates(csv_path: Path) -> set:
     dates = set()
     if not csv_path.exists():
         return dates
-    with open(csv_path, "r", newline="", encoding="utf-8") as f:
+    with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         header = next(reader, None)
         if header is None:
@@ -158,7 +168,7 @@ def fetch_xml(api_key: str, process_type: str, period_start: str, period_end: st
                     with zipfile.ZipFile(io.BytesIO(raw)) as zf:
                         names = zf.namelist()
                         if not names:
-                            print(f"    [ERROR] Empty ZIP archive.")
+                            print("    [ERROR] Empty ZIP archive.")
                             return None
                         return zf.read(names[0]).decode("utf-8")
                 else:
@@ -249,15 +259,15 @@ def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
                     for field in pel:
                         ftag = field.tag.split("}")[-1] if "}" in field.tag else field.tag
                         if ftag == "position":
-                            pos = int(field.text)
+                            pos = int(field.text or 0)
                         elif ftag == "quantity":
                             try:
-                                qty = float(field.text)
+                                qty = float(field.text or 0)
                             except (ValueError, TypeError):
                                 qty = 0.0
                         elif ftag == "procurement_Price.amount":
                             try:
-                                price = float(field.text)
+                                price = float(field.text or 0)
                             except (ValueError, TypeError):
                                 price = 0.0
                     if pos is not None:
@@ -306,20 +316,22 @@ def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
         total_vol = sum(e[1] for e in entries)
         count = len(prices)
 
-        rows.append([
-            delivery_date,
-            block_idx,
-            block_start,
-            direction,
-            count,
-            f"{max(prices):.2f}",
-            f"{percentile(prices, 10):.2f}",
-            f"{percentile(prices, 25):.2f}",
-            f"{percentile(prices, 50):.2f}",
-            f"{percentile(prices, 75):.2f}",
-            f"{percentile(prices, 90):.2f}",
-            f"{total_vol:.1f}",
-        ])
+        rows.append(
+            [
+                delivery_date,
+                block_idx,
+                block_start,
+                direction,
+                count,
+                f"{max(prices):.2f}",
+                f"{percentile(prices, 10):.2f}",
+                f"{percentile(prices, 25):.2f}",
+                f"{percentile(prices, 50):.2f}",
+                f"{percentile(prices, 75):.2f}",
+                f"{percentile(prices, 90):.2f}",
+                f"{total_vol:.1f}",
+            ]
+        )
 
     return rows
 

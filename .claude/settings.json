@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(git stash list *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh issue list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh workflow view *)",
+      "Bash(gh run view *)",
+      "Bash(ls *)",
+      "Bash(tree *)",
+      "Bash(ruff check *)",
+      "Bash(ruff format --check *)",
+      "Bash(pyright *)",
+      "Bash(pip install *)",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(gh secret *)",
+      "Bash(gh auth *)",
+      "Bash(git clean *)",
+      "Bash(git config *)"
+    ]
+  }
+}

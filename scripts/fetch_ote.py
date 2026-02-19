@@ -9,8 +9,6 @@ Usage:
 import argparse
 import csv
 import json
-import os
-import sys
 import time
 import urllib.error
 import urllib.request
@@ -40,7 +38,7 @@ def load_existing_dates(csv_path: Path) -> set[str]:
     dates: set[str] = set()
     if not csv_path.exists():
         return dates
-    with open(csv_path, "r", newline="", encoding="utf-8") as f:
+    with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         header = next(reader, None)
         if header is None:
@@ -127,10 +125,7 @@ def parse_data(data: dict, report_date: str):
         for h in range(24):
             base = h * 4
             # Hourly price from series 2
-            if base < len(price_h_points):
-                h_price = price_h_points[base].get("y", "")
-            else:
-                h_price = ""
+            h_price = price_h_points[base].get("y", "") if base < len(price_h_points) else ""
 
             # Sum the 4 quarter-hourly volumes
             h_volume = 0.0
@@ -204,7 +199,7 @@ def process_date(report_date: str, qh_existing: set[str], hourly_existing: set[s
         return False
 
     qh_rows, hourly_rows = parse_data(data, report_date)
-    if qh_rows is None and hourly_rows is None:
+    if qh_rows is None or hourly_rows is None:
         return False
 
     qh_csv = QH_DIR / f"{year}.csv"
@@ -213,12 +208,16 @@ def process_date(report_date: str, qh_existing: set[str], hourly_existing: set[s
     wrote_something = False
 
     if qh_rows and not qh_done:
-        write_csv(qh_csv, ["date", "hour", "minute", "interval_start", "price_eur_mwh", "volume_mwh"], qh_rows, qh_existing)
+        write_csv(
+            qh_csv, ["date", "hour", "minute", "interval_start", "price_eur_mwh", "volume_mwh"], qh_rows, qh_existing
+        )
         qh_existing.add(report_date)
         wrote_something = True
 
     if hourly_rows and not hourly_done:
-        write_csv(hourly_csv, ["date", "hour", "interval_start", "price_eur_mwh", "volume_mwh"], hourly_rows, hourly_existing)
+        write_csv(
+            hourly_csv, ["date", "hour", "interval_start", "price_eur_mwh", "volume_mwh"], hourly_rows, hourly_existing
+        )
         hourly_existing.add(report_date)
         wrote_something = True
 

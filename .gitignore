@@ -1,12 +1,33 @@
+# Secrets
+.env
+.env.*
+
 # IDE
 .idea/
+.vscode/
 
-# Claude Code
-.claude/
+# Claude Code (selective: allow settings.json, agents/, skills/)
+.claude/settings.local.json
+.claude/projects/
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+dist/
+build/
+*.egg-info/
+*.so
 
-# Windows artifacts
-nul
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

@@ -1,0 +1,18 @@
+[project]
+name = "algo-energy-web"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = ["ruff", "pyright"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "TCH", "RUF"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+include = ["scripts"]
