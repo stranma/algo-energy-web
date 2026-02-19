@@ -19,6 +19,15 @@
 - **Update schedule:** Daily at 4 PM UTC via GitHub Actions (`fetch-entsoe-data.yml`)
 - **Script:** `scripts/fetch_entsoe.py`
 
+### ENTSO-E Day-Ahead Prices (RO)
+
+- **Source:** ENTSO-E Transparency Platform
+- **Endpoint:** `https://web-api.tp.entsoe.eu/api` (document type A44, process type A01)
+- **Bidding zone:** Romania (10YRO-TEL------P)
+- **Timezone:** EET/EEST (UTC+2 winter, UTC+3 summer). DST switches on same dates as CET (last Sunday of March/October).
+- **Update schedule:** Daily at 4:30 PM UTC via GitHub Actions (`fetch-ro-dam-data.yml`)
+- **Script:** `scripts/fetch_ro_dam.py`
+
 ## Data Schemas
 
 ### OTE Hourly (`data/hourly/YYYY.csv`)
@@ -40,6 +49,17 @@
 | volume | Traded volume (MWh) |
 
 Quarter-hourly data is available from 2025-10-01 onwards (API format change).
+
+### RO Day-Ahead Hourly (`data/ro/hourly/YYYY.csv`)
+
+| Column | Description |
+|--------|-------------|
+| date | Delivery date (YYYY-MM-DD) |
+| hour | Hour of day (0-23) |
+| interval_start | ISO 8601 interval start (YYYY-MM-DDThh:mm:ss) |
+| price_eur_mwh | Day-ahead price (EUR/MWh) |
+
+No volume data -- the A44 document type only returns prices.
 
 ### ENTSO-E aFRR/mFRR (`data/entsoe/{afrr,mfrr}/YYYY.csv`)
 

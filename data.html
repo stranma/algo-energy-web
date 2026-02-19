@@ -26,8 +26,8 @@
         <div class="container hero-content">
           <div>
             <p class="eyebrow">Otevřená data</p>
-            <h1>Energetická tržní data (CZ)</h1>
-            <p class="lead">Ceny a objemy z denního trhu s elektřinou (OTE) a distribuce nabídek z aukcí podpůrných služeb aFRR/mFRR (ENTSO-E).</p>
+            <h1>Energetická tržní data</h1>
+            <p class="lead">Ceny a objemy z denního trhu s elektřinou (OTE, ENTSO-E) a distribuce nabídek z aukcí podpůrných služeb aFRR/mFRR.</p>
           </div>
         </div>
       </section>
@@ -80,6 +80,28 @@
             <li><strong>Chybějící data:</strong> Pokud ENTSO-E Transparency Platform nevrátí data
                 pro daný den, řádek obsahuje <code>count=0</code> a prázdné cenové sloupce.
                 Tato data nebyla dostupná na zdroji (HTTP 400/409).</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2>Denní trh s elektřinou — Rumunsko (ENTSO-E)</h2>
+          <p>Hodinové ceny z rumunského denního trhu s elektřinou (zdroj: ENTSO-E Transparency Platform, dokument A44, zóna 10YRO-TEL------P).</p>
+
+          <h3 style="margin-top: 24px;">Hodinová data</h3>
+          <ul class="download-links">
+            <li><a href="data/ro/hourly/2026.csv" download>2026 — hodinové (RO)</a></li>
+            <li><a href="data/ro/hourly/2025.csv" download>2025 — hodinové (RO)</a></li>
+          </ul>
+
+          <h3 style="margin-top: 32px;">Poznámky k datům</h3>
+          <ul style="font-size: 14px; color: #666; line-height: 1.6;">
+            <li><strong>Zdroj:</strong> ENTSO-E Transparency Platform (dokument A44, process type A01).</li>
+            <li><strong>Časová zóna:</strong> EET/EEST (UTC+2 v zimě, UTC+3 v létě).</li>
+            <li><strong>Sloupce:</strong> date, hour (0-23), interval_start, price_eur_mwh.</li>
+            <li><strong>Chybějící data:</strong> Pokud ENTSO-E nevrátí data pro daný den,
+                řádek obsahuje prázdnou cenu. Data nebyla dostupná na zdroji.</li>
           </ul>
         </div>
       </section>

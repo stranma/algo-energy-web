@@ -16,12 +16,14 @@ algo_energy_web/
   scripts/
     fetch_ote.py           -- OTE day-ahead market data fetcher
     fetch_entsoe.py        -- ENTSO-E balancing capacity fetcher
+    fetch_ro_dam.py        -- RO day-ahead prices from ENTSO-E (A44)
     debug_entsoe_xml.py    -- ENTSO-E API debug tool
   data/
-    hourly/YYYY.csv        -- hourly OTE prices
+    hourly/YYYY.csv        -- hourly OTE prices (CZ)
     qh/YYYY.csv            -- quarter-hourly OTE prices (from 2025-10-01)
     entsoe/afrr/YYYY.csv   -- aFRR accepted bid stats
     entsoe/mfrr/YYYY.csv   -- mFRR accepted bid stats
+    ro/hourly/YYYY.csv     -- RO day-ahead hourly prices
   .github/workflows/       -- CI and data-fetch automation
   METHODOLOGY.md           -- data source documentation
   CLAUDE.md                -- this file
