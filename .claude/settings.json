@@ -1,33 +1,53 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git status *)",
-      "Bash(git log *)",
-      "Bash(git diff *)",
-      "Bash(git branch *)",
-      "Bash(git show *)",
-      "Bash(git stash list *)",
-      "Bash(gh pr list *)",
-      "Bash(gh pr view *)",
-      "Bash(gh pr diff *)",
-      "Bash(gh pr checks *)",
-      "Bash(gh issue list *)",
-      "Bash(gh issue view *)",
-      "Bash(gh workflow view *)",
-      "Bash(gh run view *)",
-      "Bash(ls *)",
-      "Bash(tree *)",
-      "Bash(ruff check *)",
-      "Bash(ruff format --check *)",
-      "Bash(pyright *)",
-      "Bash(pip install *)",
+      "Bash(pytest *)", "Bash(uv run pytest *)",
+      "Bash(uv run ruff *)", "Bash(uv sync *)", "Bash(uv --version *)",
+      "Bash(uv run pyright *)",
+      "Bash(uv add *)", "Bash(uv pip *)", "Bash(uv venv *)",
+      "Bash(uv lock *)", "Bash(uv tree *)", "Bash(uv export *)",
+      "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)",
+      "Bash(git fetch *)", "Bash(git pull *)", "Bash(git rebase *)",
+      "Bash(git branch *)", "Bash(git checkout *)", "Bash(git status *)",
+      "Bash(git diff *)", "Bash(git log *)", "Bash(git show *)",
+      "Bash(git merge *)", "Bash(git stash *)",
+      "Bash(git remote *)", "Bash(git submodule *)", "Bash(git tag *)",
+      "Bash(git switch *)", "Bash(git rev-parse *)", "Bash(git cherry-pick *)",
+      "Bash(git blame *)", "Bash(git reflog *)", "Bash(git ls-files *)",
+      "Bash(git describe *)", "Bash(git shortlog *)", "Bash(git rev-list *)",
+      "Bash(gh pr create *)", "Bash(gh pr view *)", "Bash(gh pr list *)",
+      "Bash(gh pr checks *)", "Bash(gh pr diff *)", "Bash(gh pr edit *)",
+      "Bash(gh pr close *)", "Bash(gh api *)",
+      "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh run watch *)",
+      "Bash(gh issue list *)", "Bash(gh issue view *)",
+      "Bash(gh repo view *)", "Bash(gh release list *)", "Bash(gh release view *)",
+      "Bash(gh label list *)", "Bash(gh browse *)", "Bash(gh search *)",
+      "Bash(ls *)", "Bash(cat *)", "Bash(find *)", "Bash(grep *)",
+      "Bash(head *)", "Bash(tail *)", "Bash(wc *)", "Bash(tree *)",
+      "Bash(pwd *)", "Bash(which *)", "Bash(echo *)", "Bash(dir *)",
+      "Bash(sleep *)", "Bash(sort *)", "Bash(uniq *)", "Bash(diff *)",
       "WebSearch"
     ],
     "deny": [
-      "Bash(gh secret *)",
-      "Bash(gh auth *)",
-      "Bash(git clean *)",
-      "Bash(git config *)"
+      "Bash(gh secret *)", "Bash(gh auth *)", "Bash(gh ssh-key *)", "Bash(gh gpg-key *)",
+      "Bash(git clean *)", "Bash(git config *)",
+      "Bash(uv self *)"
+    ],
+    "ask": [
+      "Bash(python *)", "Bash(uv run python *)",
+      "Bash(docker *)", "Bash(docker-compose *)", "Bash(terraform *)",
+      "Bash(gh pr merge *)", "Bash(gh pr reopen *)", "Bash(gh pr comment *)",
+      "Bash(gh pr review *)", "Bash(gh pr ready *)", "Bash(gh workflow run *)",
+      "Bash(gh workflow enable *)", "Bash(gh workflow disable *)",
+      "Bash(gh issue create *)", "Bash(gh issue comment *)",
+      "Bash(gh issue close *)", "Bash(gh issue edit *)",
+      "Bash(git reset *)", "Bash(git init *)", "Bash(git clone *)",
+      "Bash(git rm *)", "Bash(git mv *)", "Bash(git restore *)", "Bash(git worktree *)",
+      "Bash(uv remove *)", "Bash(uv cache *)", "Bash(uv init *)",
+      "WebFetch"
     ]
+  },
+  "enabledPlugins": {
+    "security-guidance@claude-code-plugins": true
   }
 }
