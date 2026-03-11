@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Fetch CZ aFRR/mFRR accepted bid distributions from ENTSO-E (A15).
+"""Fetch aFRR/mFRR accepted bid distributions from ENTSO-E (A15).
 
 Uses the A15 (procured balancing capacity) endpoint which returns all
 individual accepted bids. Aggregates in-memory to per-day/block/direction
-percentile statistics.
+percentile statistics. Supports multiple countries (CZ, RO).
 
 Usage:
-    Backfill:  python scripts/fetch_entsoe.py --from 2025-10-02 --to 2026-02-11
-    Daily:     python scripts/fetch_entsoe.py  (fetches yesterday + today)
-    API key:   --api-key KEY  or env ENTSOE_API_KEY
+    CZ daily:    python scripts/fetch_entsoe.py
+    RO daily:    python scripts/fetch_entsoe.py --country ro
+    CZ backfill: python scripts/fetch_entsoe.py --from 2025-10-02 --to 2026-02-11
+    RO backfill: python scripts/fetch_entsoe.py --country ro --from 2025-10-02 --to 2026-03-10
+    API key:     --api-key KEY  or env ENTSOE_API_KEY
 """
 
 import argparse
@@ -30,15 +32,20 @@ BASE_URL = "https://web-api.tp.entsoe.eu/api"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR = SCRIPT_DIR.parent / "data" / "entsoe"
-AFRR_DIR = DATA_DIR / "afrr"
-MFRR_DIR = DATA_DIR / "mfrr"
 
-DELAY_BETWEEN_REQUESTS = 2.0  # seconds — ENTSO-E allows 400/min, we stay safe
+DELAY_BETWEEN_REQUESTS = 2.0  # seconds -- ENTSO-E allows 400/min, we stay safe
+
+# Country configurations: EIC code and UTC offsets for local timezone
+# Both CET/CEST and EET/EEST use the same EU-wide DST switch dates
+COUNTRIES: dict[str, dict[str, str | int]] = {
+    "cz": {"eic": "10YCZ-CEPS-----N", "name": "Czech Republic", "winter_utc_offset": 1, "summer_utc_offset": 2},
+    "ro": {"eic": "10YRO-TEL------P", "name": "Romania", "winter_utc_offset": 2, "summer_utc_offset": 3},
+}
 
 # Process types for each product
-PRODUCTS = {
-    "afrr": {"processType": "A51", "dir": None},  # dirs set in ensure_dirs
-    "mfrr": {"processType": "A47", "dir": None},
+PRODUCTS: dict[str, str] = {
+    "afrr": "A51",
+    "mfrr": "A47",
 }
 
 # Direction mapping
@@ -60,11 +67,14 @@ CSV_HEADER = [
 ]
 
 
-def ensure_dirs():
-    AFRR_DIR.mkdir(parents=True, exist_ok=True)
-    MFRR_DIR.mkdir(parents=True, exist_ok=True)
-    PRODUCTS["afrr"]["dir"] = AFRR_DIR
-    PRODUCTS["mfrr"]["dir"] = MFRR_DIR
+def get_product_dir(country: str, product: str) -> Path:
+    """Return data directory for a country/product combination."""
+    return DATA_DIR / country / product
+
+
+def ensure_dirs(country: str):
+    for product in PRODUCTS:
+        get_product_dir(country, product).mkdir(parents=True, exist_ok=True)
 
 
 def load_existing_dates(csv_path: Path) -> set:
@@ -94,10 +104,10 @@ def write_csv(csv_path: Path, rows: list):
         writer.writerows(rows)
 
 
-def cet_to_utc_str(d: date) -> tuple:
-    """Convert a CET delivery date to ENTSO-E UTC period strings.
+def local_to_utc_str(d: date, winter_offset: int, summer_offset: int) -> tuple[str, str]:
+    """Convert a local delivery date to ENTSO-E UTC period strings.
 
-    CET midnight = 23:00 UTC previous day (winter) or 22:00 UTC (summer).
+    Uses EU-wide DST rules (last Sunday of March / October).
     Returns (periodStart, periodEnd) in YYYYMMDDHHmm format.
     """
     year = d.year
@@ -111,11 +121,9 @@ def cet_to_utc_str(d: date) -> tuple:
     dst_end = oct31 - timedelta(days=(oct31.weekday() + 1) % 7)
 
     if dst_start <= d < dst_end:
-        # CEST: UTC+2, so CET midnight = 22:00 UTC previous day
-        utc_start = datetime(d.year, d.month, d.day, 0, 0) - timedelta(hours=2)
+        utc_start = datetime(d.year, d.month, d.day, 0, 0) - timedelta(hours=summer_offset)
     else:
-        # CET: UTC+1, so CET midnight = 23:00 UTC previous day
-        utc_start = datetime(d.year, d.month, d.day, 0, 0) - timedelta(hours=1)
+        utc_start = datetime(d.year, d.month, d.day, 0, 0) - timedelta(hours=winter_offset)
 
     utc_end = utc_start + timedelta(hours=24)
 
@@ -137,11 +145,13 @@ def percentile(sorted_vals: list, p: float) -> float:
     return sorted_vals[f] + (k - f) * (sorted_vals[c] - sorted_vals[f])
 
 
-def fetch_xml(api_key: str, process_type: str, period_start: str, period_end: str, retries: int = 1) -> str | None:
+def fetch_xml(
+    api_key: str, process_type: str, period_start: str, period_end: str, area_domain: str, retries: int = 1
+) -> str | None:
     """Fetch ENTSO-E A15 API and return decompressed XML string, or None on error."""
     params = (
         f"documentType=A15"
-        f"&area_Domain=10YCZ-CEPS-----N"
+        f"&area_Domain={area_domain}"
         f"&processType={process_type}"
         f"&Type_MarketAgreement.Type=A01"
         f"&periodStart={period_start}"
@@ -197,11 +207,6 @@ def fetch_xml(api_key: str, process_type: str, period_start: str, period_end: st
                 print(f"    [ERROR] Failed to fetch: {exc}. Skipping.")
                 return None
     return None
-
-
-def is_4h_blocks(points: list) -> bool:
-    """Check if sparse positions fall on 4-hour boundaries (1,5,9,13,17,21)."""
-    return all((pos - 1) % 4 == 0 for pos, _, _ in points)
 
 
 def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
@@ -280,7 +285,7 @@ def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
 
             # Determine block mapping based on resolution / point positions
             if resolution == "PT4H":
-                # Native 4h blocks: position 1-6 → block 0-5
+                # Native 4h blocks: position 1-6 -> block 0-5
                 for pos, qty, price in points:
                     if qty == 0 and price == 0:
                         continue
@@ -288,8 +293,9 @@ def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
                     hour = block_idx * 4
                     block_start = f"{hour:02d}:00"
                     bids[(block_idx, block_start, direction)].append((price, qty))
-            elif resolution == "PT60M" and is_4h_blocks(points):
-                # Sparse hourly positions at 4h boundaries (1,5,9,13,17,21)
+            elif resolution == "PT60M":
+                # Hourly positions (1-24) -> map to 4h blocks via (pos-1)//4
+                # Works for CZ sparse 4h-boundary positions and RO dense hourly data
                 for pos, qty, price in points:
                     if qty == 0 and price == 0:
                         continue
@@ -297,12 +303,6 @@ def parse_and_aggregate(xml_str: str, delivery_date: str) -> list:
                     hour = block_idx * 4
                     block_start = f"{hour:02d}:00"
                     bids[(block_idx, block_start, direction)].append((price, qty))
-            elif resolution == "PT60M" and len(points) == 1:
-                # Single point = flat daily value → assign to block 0
-                pos, qty, price = points[0]
-                if not (qty == 0 and price == 0):
-                    bids[(0, "00:00", direction)].append((price, qty))
-            # else: hourly bids with many points → skip
 
     # Aggregate each group into stats
     rows = []
@@ -358,6 +358,7 @@ def date_range(start: date, end: date):
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch ENTSO-E balancing capacity data (A15 accepted bids).")
+    parser.add_argument("--country", choices=list(COUNTRIES.keys()), default="cz", help="Country code (default: cz)")
     parser.add_argument("--from", dest="from_date", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--to", dest="to_date", help="End date (YYYY-MM-DD)")
     parser.add_argument("--api-key", dest="api_key", help="ENTSO-E API key (or env ENTSOE_API_KEY)")
@@ -368,7 +369,14 @@ def main():
         print("ERROR: No API key. Use --api-key or set ENTSOE_API_KEY env var.")
         sys.exit(1)
 
-    ensure_dirs()
+    country = args.country
+    cfg = COUNTRIES[country]
+    area_domain = str(cfg["eic"])
+    winter_offset = int(cfg["winter_utc_offset"])
+    summer_offset = int(cfg["summer_utc_offset"])
+
+    ensure_dirs(country)
+    print(f"Country: {cfg['name']} ({country.upper()})")
 
     if args.from_date and args.to_date:
         start = datetime.strptime(args.from_date, "%Y-%m-%d").date()
@@ -384,9 +392,9 @@ def main():
     dates = list(date_range(start, end))
     total = len(dates)
 
-    for product in PRODUCTS:
-        product_dir = PRODUCTS[product]["dir"]
-        print(f"\n=== {product.upper()} ===")
+    for product, process_type in PRODUCTS.items():
+        product_dir = get_product_dir(country, product)
+        print(f"\n=== {product.upper()} ({country.upper()}) ===")
 
         years = sorted(set(d.year for d in dates))
         existing_by_year = {}
@@ -409,10 +417,9 @@ def main():
                 skipped += 1
                 continue
 
-            process_type = PRODUCTS[product]["processType"]
-            period_start, period_end = cet_to_utc_str(d)
+            period_start, period_end = local_to_utc_str(d, winter_offset, summer_offset)
 
-            xml_str = fetch_xml(api_key, process_type, period_start, period_end)
+            xml_str = fetch_xml(api_key, process_type, period_start, period_end, area_domain)
             api_calls += 1
 
             csv_path = product_dir / f"{year}.csv"
@@ -422,7 +429,7 @@ def main():
                 write_csv(csv_path, rows)
                 existing.add(date_str)
                 fetched += 1
-                print(f"[NO DATA] → {len(rows)} NaN rows")
+                print(f"[NO DATA] -> {len(rows)} NaN rows")
             else:
                 rows = parse_and_aggregate(xml_str, date_str)
                 if rows:
@@ -435,11 +442,10 @@ def main():
                     write_csv(csv_path, rows)
                     existing.add(date_str)
                     fetched += 1
-                    print(f"[NO BIDS] → {len(rows)} NaN rows")
+                    print(f"[NO BIDS] -> {len(rows)} NaN rows")
 
-            # Rate limiting
-            if i < total - 1:
-                time.sleep(DELAY_BETWEEN_REQUESTS)
+            # Rate limiting after each API call
+            time.sleep(DELAY_BETWEEN_REQUESTS)
 
         print(f"  {product.upper()} done. Fetched: {fetched}, Skipped: {skipped}, API calls: {api_calls}")
 

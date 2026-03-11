@@ -21,8 +21,10 @@ algo_energy_web/
   data/
     hourly/YYYY.csv        -- hourly OTE prices (CZ)
     qh/YYYY.csv            -- quarter-hourly OTE prices (from 2025-10-01)
-    entsoe/afrr/YYYY.csv   -- aFRR accepted bid stats
-    entsoe/mfrr/YYYY.csv   -- mFRR accepted bid stats
+    entsoe/cz/afrr/YYYY.csv   -- CZ aFRR accepted bid stats
+    entsoe/cz/mfrr/YYYY.csv   -- CZ mFRR accepted bid stats
+    entsoe/ro/afrr/YYYY.csv   -- RO aFRR accepted bid stats
+    entsoe/ro/mfrr/YYYY.csv   -- RO mFRR accepted bid stats
     ro/hourly/YYYY.csv     -- RO day-ahead hourly prices
   .github/workflows/       -- CI and data-fetch automation
   .claude/agents/          -- Claude Code agent definitions

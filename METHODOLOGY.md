@@ -13,11 +13,13 @@
 ### ENTSO-E Balancing Capacity (aFRR & mFRR)
 
 - **Source:** ENTSO-E Transparency Platform
-- **Endpoint:** `https://web-api.tp.entsoe.eu/api` (document type A15 — accepted bids)
+- **Endpoint:** `https://web-api.tp.entsoe.eu/api` (document type A15 -- accepted bids)
 - **Products:** aFRR (process type A51) and mFRR (process type A47)
-- **Area:** CZ (10YCZ-CEPS-----N)
+- **Areas:**
+  - CZ (10YCZ-CEPS-----N) -- data from 2025-10-02, PT4H resolution
+  - RO (10YRO-TEL------P) -- data from 2024-09-01, PT60M resolution (aggregated to 4h blocks)
 - **Update schedule:** Daily at 4 PM UTC via GitHub Actions (`fetch-entsoe-data.yml`)
-- **Script:** `scripts/fetch_entsoe.py`
+- **Script:** `scripts/fetch_entsoe.py --country {cz|ro}`
 
 ### ENTSO-E Day-Ahead Prices (RO)
 
@@ -61,7 +63,7 @@ Quarter-hourly data is available from 2025-10-01 onwards (API format change).
 
 No volume data -- the A44 document type only returns prices.
 
-### ENTSO-E aFRR/mFRR (`data/entsoe/{afrr,mfrr}/YYYY.csv`)
+### ENTSO-E aFRR/mFRR (`data/entsoe/{cz,ro}/{afrr,mfrr}/YYYY.csv`)
 
 | Column | Description |
 |--------|-------------|

@@ -20,8 +20,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Fetch ENTSO-E data (daily mode)
-        run: python scripts/fetch_entsoe.py
+      - name: Fetch CZ ENTSO-E data
+        run: python scripts/fetch_entsoe.py --country cz
+        env:
+          ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
+
+      - name: Fetch RO ENTSO-E data
+        run: python scripts/fetch_entsoe.py --country ro
         env:
           ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
 
