@@ -32,7 +32,7 @@
 
 ## Data Schemas
 
-### OTE Hourly (`data/hourly/YYYY.csv`)
+### OTE Hourly (`data/cz/da-hourly/YYYY.csv`)
 
 | Column | Description |
 |--------|-------------|
@@ -41,7 +41,7 @@
 | price | Day-ahead price (EUR/MWh) |
 | volume | Traded volume (MWh) |
 
-### OTE Quarter-Hourly (`data/qh/YYYY.csv`)
+### OTE Quarter-Hourly (`data/cz/da-qh/YYYY.csv`)
 
 | Column | Description |
 |--------|-------------|
@@ -52,7 +52,7 @@
 
 Quarter-hourly data is available from 2025-10-01 onwards (API format change).
 
-### RO Day-Ahead Hourly (`data/ro/hourly/YYYY.csv`)
+### RO Day-Ahead Hourly (`data/ro/da-hourly/YYYY.csv`)
 
 | Column | Description |
 |--------|-------------|
@@ -63,7 +63,7 @@ Quarter-hourly data is available from 2025-10-01 onwards (API format change).
 
 No volume data -- the A44 document type only returns prices.
 
-### ENTSO-E aFRR/mFRR (`data/entsoe/{cz,ro}/{afrr,mfrr}/YYYY.csv`)
+### ENTSO-E aFRR/mFRR (`data/{cz,ro}/{afrr,mfrr}-accepted-reservation-bids/YYYY.csv`)
 
 | Column | Description |
 |--------|-------------|

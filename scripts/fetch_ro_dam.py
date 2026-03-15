@@ -2,7 +2,7 @@
 """Fetch Romanian Day-Ahead electricity prices from ENTSO-E (A44).
 
 Uses the A44 (day-ahead prices) endpoint for the Romanian bidding zone
-(10YRO-TEL------P). Stores hourly prices in data/ro/hourly/YYYY.csv.
+(10YRO-TEL------P). Stores hourly prices in data/ro/da-hourly/YYYY.csv.
 
 Usage:
     Backfill:  python scripts/fetch_ro_dam.py --from 2025-01-02 --to 2025-01-31
@@ -27,7 +27,7 @@ BASE_URL = "https://web-api.tp.entsoe.eu/api"
 RO_DOMAIN = "10YRO-TEL------P"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DATA_DIR = SCRIPT_DIR.parent / "data" / "ro" / "hourly"
+DATA_DIR = SCRIPT_DIR.parent / "data" / "ro" / "da-hourly"
 
 DELAY_BETWEEN_REQUESTS = 2.0  # seconds -- ENTSO-E allows 400/min, we stay safe
 

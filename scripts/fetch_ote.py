@@ -21,9 +21,9 @@ BASE_URL = (
 )
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DATA_DIR = SCRIPT_DIR.parent / "data"
-HOURLY_DIR = DATA_DIR / "hourly"
-QH_DIR = DATA_DIR / "qh"
+DATA_DIR = SCRIPT_DIR.parent / "data" / "cz"
+HOURLY_DIR = DATA_DIR / "da-hourly"
+QH_DIR = DATA_DIR / "da-qh"
 
 DELAY_BETWEEN_REQUESTS = 1.5  # seconds — be polite to OTE servers
 

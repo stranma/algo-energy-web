@@ -19,13 +19,13 @@ algo_energy_web/
     fetch_entsoe.py        -- ENTSO-E balancing capacity fetcher
     fetch_ro_dam.py        -- RO day-ahead prices from ENTSO-E (A44)
   data/
-    hourly/YYYY.csv        -- hourly OTE prices (CZ)
-    qh/YYYY.csv            -- quarter-hourly OTE prices (from 2025-10-01)
-    entsoe/cz/afrr/YYYY.csv   -- CZ aFRR accepted bid stats
-    entsoe/cz/mfrr/YYYY.csv   -- CZ mFRR accepted bid stats
-    entsoe/ro/afrr/YYYY.csv   -- RO aFRR accepted bid stats
-    entsoe/ro/mfrr/YYYY.csv   -- RO mFRR accepted bid stats
-    ro/hourly/YYYY.csv     -- RO day-ahead hourly prices
+    cz/da-hourly/YYYY.csv                      -- CZ hourly OTE DAM prices
+    cz/da-qh/YYYY.csv                          -- CZ quarter-hourly OTE DAM prices (from 2025-10-01)
+    cz/afrr-accepted-reservation-bids/YYYY.csv -- CZ aFRR accepted bid stats
+    cz/mfrr-accepted-reservation-bids/YYYY.csv -- CZ mFRR accepted bid stats
+    ro/da-hourly/YYYY.csv                      -- RO DAM hourly prices
+    ro/afrr-accepted-reservation-bids/YYYY.csv -- RO aFRR accepted bid stats
+    ro/mfrr-accepted-reservation-bids/YYYY.csv -- RO mFRR accepted bid stats
   .github/workflows/       -- CI and data-fetch automation
   .claude/agents/          -- Claude Code agent definitions
   METHODOLOGY.md           -- data source documentation

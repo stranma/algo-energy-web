@@ -31,7 +31,7 @@ from pathlib import Path
 BASE_URL = "https://web-api.tp.entsoe.eu/api"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DATA_DIR = SCRIPT_DIR.parent / "data" / "entsoe"
+DATA_DIR = SCRIPT_DIR.parent / "data"
 
 DELAY_BETWEEN_REQUESTS = 2.0  # seconds -- ENTSO-E allows 400/min, we stay safe
 
@@ -43,9 +43,9 @@ COUNTRIES: dict[str, dict[str, str | int]] = {
 }
 
 # Process types for each product
-PRODUCTS: dict[str, str] = {
-    "afrr": "A51",
-    "mfrr": "A47",
+PRODUCTS: dict[str, dict[str, str]] = {
+    "afrr": {"processType": "A51", "folder": "afrr-accepted-reservation-bids"},
+    "mfrr": {"processType": "A47", "folder": "mfrr-accepted-reservation-bids"},
 }
 
 # Direction mapping
@@ -69,7 +69,7 @@ CSV_HEADER = [
 
 def get_product_dir(country: str, product: str) -> Path:
     """Return data directory for a country/product combination."""
-    return DATA_DIR / country / product
+    return DATA_DIR / country / PRODUCTS[product]["folder"]
 
 
 def ensure_dirs(country: str):
@@ -392,7 +392,8 @@ def main():
     dates = list(date_range(start, end))
     total = len(dates)
 
-    for product, process_type in PRODUCTS.items():
+    for product, product_cfg in PRODUCTS.items():
+        process_type = product_cfg["processType"]
         product_dir = get_product_dir(country, product)
         print(f"\n=== {product.upper()} ({country.upper()}) ===")
 
